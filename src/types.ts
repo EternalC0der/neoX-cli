@@ -1,4 +1,3 @@
 export type Config = {
-    repo: string
-    outDir?: string
+    shared: { repo: string; outDir?: string }[]
 }

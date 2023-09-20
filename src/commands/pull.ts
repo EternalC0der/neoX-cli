@@ -27,15 +27,31 @@ export const handler = async (argv: Arguments<Options>): Promise<void> => {
         process.exit(1)
     }
 
+    // Check if shared has no entries.
+    if (!config.shared || !config.shared.length) {
+        console.error('**Invalid** config file, make sure you defined "shared" with at least one entry!')
+        process.exit(1)
+    }
+
+    // Process each shared entry.
+    for (const shared of config.shared) {
+        console.log(`Processing ${shared.outDir || shared.repo}...`)
+        await processShared(shared, debug)
+    }
+
+    process.exit(0)
+}
+
+async function processShared(shared: Config['shared'][0], debug?: boolean) {
     // Validate config
     // Check if config.repo is defined.
-    if (!config.repo) {
+    if (!shared.repo) {
         console.error('**Invalid** config file, make sure you defined "repo" with a valid repository!')
         process.exit(1)
     }
 
     // Create outDir directory if it doesn't exist.
-    const outDir = config.outDir || '.cross_types'
+    const outDir = shared.outDir || '.cross_types'
     try {
         if (!existsSync(outDir)) mkdirSync(outDir)
     } catch (error) {
@@ -50,12 +66,12 @@ export const handler = async (argv: Arguments<Options>): Promise<void> => {
 
     let action: 'clone' | 'pull' | 'none' = 'none'
     try {
-        await git.clone(config.repo, '.')
+        await git.clone(shared.repo, '.')
         action = 'clone'
     } catch (cloneError: any) {
         if (debug) console.error(cloneError)
         try {
-            await git.pull(config.repo, 'main')
+            await git.pull(shared.repo, 'main')
             action = 'pull'
         } catch (pullError: any) {
             if (debug) console.error(pullError)
@@ -70,12 +86,8 @@ export const handler = async (argv: Arguments<Options>): Promise<void> => {
     }
     if (action === 'clone') {
         console.log('Successfully **retrieved** data from remote source!')
-        process.exit(0)
     }
     if (action === 'pull') {
         console.log('Successfully **updated** data from remote source!')
-        process.exit(0)
     }
-
-    process.exit(0)
 }
