@@ -1,7 +1,7 @@
 {
   "name": "cross-types",
   "description": "Cross typescript interfaces and types for microservice topologies",
-  "version": "1.3.2",
+  "version": "1.4.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [

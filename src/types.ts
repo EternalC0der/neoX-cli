@@ -1,3 +1,3 @@
 export type Config = {
-    shared: { repo: string; outDir?: string }[]
+    shared: { repo: string; outDir?: string; exclude: string[] }[]
 }

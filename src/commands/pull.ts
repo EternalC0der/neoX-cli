@@ -1,7 +1,7 @@
 import type { Arguments, CommandBuilder } from 'yargs'
 import { simpleGit, SimpleGit, CleanOptions } from 'simple-git'
 import { defaultGitOptions } from '../core'
-import { existsSync, mkdirSync, readFileSync } from 'fs'
+import { existsSync, mkdirSync, readFileSync, unlinkSync } from 'fs'
 import { Config } from '../types'
 
 type Options = {
@@ -89,5 +89,30 @@ async function processShared(shared: Config['shared'][0], debug?: boolean) {
     }
     if (action === 'pull') {
         console.log('Successfully **updated** data from remote source!')
+    }
+
+    await processSharedExclude(shared, outDir)
+}
+
+async function processSharedExclude(shared: Config['shared'][0], outDir: string) {
+    // Validate config
+    // Check if config.exclude is defined.
+    if (!shared.exclude) {
+        console.error('**Invalid** config file, make sure you defined "exclude" with an array of files to exclude!')
+        process.exit(1)
+    }
+
+    // Process each exclude entry.
+    for (const exclude of shared.exclude) {
+        // Remove excluded file from outDir directory. if exists.
+        try {
+            if (existsSync(`${outDir}/${exclude}`)) {
+                console.log(`[Exclude] Removing ${outDir}/${exclude}...`)
+                unlinkSync(`${outDir}/${exclude}`)
+            }
+        } catch (error) {
+            console.error(`**Failed** to access \`${outDir}\` directory!`)
+            process.exit(1)
+        }
     }
 }

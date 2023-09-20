@@ -19,7 +19,8 @@ export const handler = (argv: Arguments): void => {
             shared: [
                 {
                     repo: 'https://<token>@github.com/<user>/<repo>.git',
-                    outDir: '.cross_types'
+                    outDir: '.cross_types',
+                    explude: []
                 }
             ]
         }
