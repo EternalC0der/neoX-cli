@@ -9,7 +9,7 @@ type Options = {
 }
 
 export const command: string = 'pull'
-export const desc: string = 'Pull type definitions from remote source into .cross_types directory.'
+export const desc: string = 'Pull type definitions from remote source into your `outDir` directory.'
 
 export const builder: CommandBuilder<Options, Options> = (yargs) =>
     yargs.options({
@@ -23,20 +23,30 @@ export const handler = async (argv: Arguments<Options>): Promise<void> => {
     try {
         config = JSON.parse(readFileSync('crosstypes.config.json', 'utf8'))
     } catch (error) {
-        process.stderr.write('**Failed** to load config file, make sure you initialized cross-types with `cross-types init`!')
+        console.error('**Failed** to load config file, make sure you initialized cross-types with `cross-types init`!')
         process.exit(1)
     }
 
-    // Create .cross_types directory if it doesn't exist.
+    // Validate config
+    // Check if config.repo is defined.
+    if (!config.repo) {
+        console.error('**Invalid** config file, make sure you defined "repo" with a valid repository!')
+        process.exit(1)
+    }
+
+    // Create outDir directory if it doesn't exist.
+    const outDir = config.outDir || '.cross_types'
     try {
-        if (!existsSync('.cross_types')) mkdirSync('.cross_types')
+        if (!existsSync(outDir)) mkdirSync(outDir)
     } catch (error) {
-        process.stderr.write('**Failed** to access .cross_types directory!')
+        console.error(`**Failed** to access \`${outDir}\` directory!`)
         process.exit(1)
     }
 
     // Load git
-    const git: SimpleGit = simpleGit(defaultGitOptions).clean(CleanOptions.FORCE)
+    let baseDir = defaultGitOptions.baseDir!
+    if (outDir) baseDir = baseDir.replace('/.cross_types', `/${outDir}`)
+    const git: SimpleGit = simpleGit({ ...defaultGitOptions, baseDir }).clean(CleanOptions.FORCE)
 
     let action: 'clone' | 'pull' | 'none' = 'none'
     try {
@@ -55,15 +65,15 @@ export const handler = async (argv: Arguments<Options>): Promise<void> => {
     const status = await git.status()
     if (debug) console.log('Status:', status)
     if (action === 'none') {
-        process.stderr.write('**Failed** to retrieve data from remote source!')
+        console.error('**Failed** to retrieve data from remote source!')
         process.exit(1)
     }
     if (action === 'clone') {
-        process.stdout.write('Successfully **retrieved** data from remote source!')
+        console.log('Successfully **retrieved** data from remote source!')
         process.exit(0)
     }
     if (action === 'pull') {
-        process.stdout.write('Successfully **updated** data from remote source!')
+        console.log('Successfully **updated** data from remote source!')
         process.exit(0)
     }
 

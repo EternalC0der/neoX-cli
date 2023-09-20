@@ -106,3 +106,5 @@ dist
 # Cross types
 crosstypes.config.json
 /.cross_types
+
+.yarn/
