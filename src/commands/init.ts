@@ -20,7 +20,7 @@ export const handler = (argv: Arguments): void => {
                 {
                     repo: 'https://<token>@github.com/<user>/<repo>.git',
                     outDir: '.cross_types',
-                    explude: []
+                    exclude: []
                 }
             ]
         }
