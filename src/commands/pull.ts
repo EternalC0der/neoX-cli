@@ -3,6 +3,7 @@ import { simpleGit, SimpleGit, CleanOptions } from 'simple-git'
 import { defaultGitOptions } from '../core'
 import { existsSync, mkdirSync, readFileSync, unlinkSync } from 'fs'
 import { Config } from '../types'
+import { rimraf } from 'rimraf'
 
 type Options = {
     debug: boolean | undefined
@@ -18,12 +19,12 @@ export const builder: CommandBuilder<Options, Options> = (yargs) =>
 
 export const handler = async (argv: Arguments<Options>): Promise<void> => {
     const { debug } = argv
-    // Load config from crosstypes.config.json
+    // Load config from neoX.config.json
     let config: Config
     try {
-        config = JSON.parse(readFileSync('crosstypes.config.json', 'utf8'))
+        config = JSON.parse(readFileSync('neoX.config.json', 'utf8'))
     } catch (error) {
-        console.error('**Failed** to load config file, make sure you initialized cross-types with `cross-types init`!')
+        console.error('**Failed** to load config file, make sure you initialized neoX with `neoX init`!')
         process.exit(1)
     }
 
@@ -44,14 +45,20 @@ export const handler = async (argv: Arguments<Options>): Promise<void> => {
 
 async function processShared(shared: Config['shared'][0], debug?: boolean) {
     // Validate config
-    // Check if config.repo is defined.
+    // Check if config.repo is defined
     if (!shared.repo) {
         console.error('**Invalid** config file, make sure you defined "repo" with a valid repository!')
         process.exit(1)
     }
 
-    // Create outDir directory if it doesn't exist.
-    const outDir = shared.outDir || '.cross_types'
+    // Get isSubmodule from config or default to true
+    const isSubmodule = typeof shared.isSubmodule === 'undefined' ? true : shared.isSubmodule
+
+    // Remove outDir directory if not submodule.
+    const outDir = shared.outDir || '.neoX'
+    if (!isSubmodule) await removeOutDir(outDir)
+
+    // Create outDir directory if it doesn't exist
     try {
         if (!existsSync(outDir)) mkdirSync(outDir)
     } catch (error) {
@@ -59,39 +66,55 @@ async function processShared(shared: Config['shared'][0], debug?: boolean) {
         process.exit(1)
     }
 
+    // Download shared repo
+    const state = await downloadShared(shared, initGit(outDir), isSubmodule, debug)
+    if (state === 'clone') console.log('Successfully **retrieved** data from remote source!')
+    if (state === 'pull') console.log('Successfully **updated** data from remote source!')
+
+    // Post process shared repo
+    await processSharedExclude(shared, outDir)
+    if (!isSubmodule) await removeGitDir(outDir)
+}
+
+function initGit(outDir: string): SimpleGit {
     // Load git
     let baseDir = defaultGitOptions.baseDir!
-    if (outDir) baseDir = baseDir.replace('/.cross_types', `/${outDir}`)
+    if (outDir) baseDir = baseDir.replace('/.neoX', `/${outDir}`)
     const git: SimpleGit = simpleGit({ ...defaultGitOptions, baseDir }).clean(CleanOptions.FORCE)
+    return git
+}
 
-    let action: 'clone' | 'pull' | 'none' = 'none'
+async function removeOutDir(outDir: string) {
+    // Remove outDir directory if not submodule.
     try {
+        console.log(`Removing \`${outDir}\` directory...`)
+        await rimraf(outDir)
+    } catch (error) {
+        console.error(`**Failed** to access \`${outDir}\` directory!`)
+        process.exit(1)
+    }
+}
+
+async function downloadShared(shared: Config['shared'][0], git: SimpleGit, isSubmodule: boolean, debug?: boolean): Promise<'clone' | 'pull'> {
+    // Download shared repo
+    try {
+        console.log('Downloading data from remote source...')
         await git.clone(shared.repo, '.')
-        action = 'clone'
+        return 'clone'
     } catch (cloneError: any) {
         if (debug) console.error(cloneError)
-        try {
-            await git.pull(shared.repo, 'main')
-            action = 'pull'
-        } catch (pullError: any) {
-            if (debug) console.error(pullError)
+        if (isSubmodule) {
+            try {
+                await git.pull(shared.repo, 'main')
+                return 'pull'
+            } catch (pullError: any) {
+                if (debug) console.error(pullError)
+            }
         }
     }
 
-    const status = await git.status()
-    if (debug) console.log('Status:', status)
-    if (action === 'none') {
-        console.error('**Failed** to retrieve data from remote source!')
-        process.exit(1)
-    }
-    if (action === 'clone') {
-        console.log('Successfully **retrieved** data from remote source!')
-    }
-    if (action === 'pull') {
-        console.log('Successfully **updated** data from remote source!')
-    }
-
-    await processSharedExclude(shared, outDir)
+    console.error('**Failed** to retrieve data from remote source!')
+    process.exit(1)
 }
 
 async function processSharedExclude(shared: Config['shared'][0], outDir: string) {
@@ -114,5 +137,18 @@ async function processSharedExclude(shared: Config['shared'][0], outDir: string)
             console.error(`**Failed** to access \`${outDir}\` directory!`)
             process.exit(1)
         }
+    }
+}
+
+async function removeGitDir(outDir: string) {
+    // Remove .git directory if not submodule.
+    try {
+        if (existsSync(`${outDir}/.git`)) {
+            console.log('Removing .git directory... submodule is disabled.')
+            await rimraf(`${outDir}/.git`)
+        }
+    } catch (error) {
+        console.error(`**Failed** to access \`.git\` directory!`)
+        process.exit(1)
     }
 }

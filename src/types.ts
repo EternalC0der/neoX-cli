@@ -1,3 +1,3 @@
 export type Config = {
-    shared: { repo: string; outDir?: string; exclude: string[] }[]
+    shared: { repo: string; outDir?: string; isSubmodule?: boolean; exclude: string[] }[]
 }
