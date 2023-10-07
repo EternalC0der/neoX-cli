@@ -13,7 +13,7 @@
         "lint": "eslint --ext .js,.ts . --ignore-path ../.gitignore",
         "format": "prettier --ignore-path ../.gitignore --write \"**/*.+(js|ts|json)\""
     },
-    "repository": "https://github.com/EternalC0der/neox.git",
+    "repository": "https://github.com/EternalC0der/neoX-cli.git",
     "author": "EternalC0der <s.eternalcoder@gmail.com>",
     "license": "MIT",
     "devDependencies": {

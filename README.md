@@ -114,7 +114,7 @@ Updates your local type definitions from your centralized type repository.
 
 ## 📣 Contributing
 
-1. Fork the repo (https://github.com/EternalC0der/neoX/fork)
+1. Fork the repo (https://github.com/EternalC0der/neoX-cli/fork)
 2. Create your feature branch (`git checkout -b feature/fooBar`)
 3. Commit your changes (`git commit -am 'Add some fooBar'`)
 4. Push to the branch (`git push origin feature/fooBar`)
