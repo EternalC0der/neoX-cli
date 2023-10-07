@@ -1,5 +1,5 @@
 {
-    "name": "neox",
+    "name": "neox-cli",
     "description": "Cross typescript interfaces, types and more!",
     "version": "2.0.0-rc1",
     "main": "dist/index.js",
