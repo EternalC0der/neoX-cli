@@ -5,6 +5,7 @@ import { existsSync, mkdirSync, readFileSync, unlinkSync } from 'fs'
 import { Config } from '../types'
 import { rimraf } from 'rimraf'
 import ora from 'ora'
+import chalk from 'chalk'
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { Select } = require('enquirer')
 
@@ -30,13 +31,13 @@ export const handler = async (argv: Arguments<Options>): Promise<void> => {
     try {
         config = JSON.parse(readFileSync('neoX.config.json', 'utf8'))
     } catch (error) {
-        console.error('**Failed** to load config file, make sure you initialized neoX with `neoX init`!')
+        console.error(`${chalk.red('[ Failed ]')} Failed to load config file, make sure you initialized neoX with \`${chalk.green(chalk.underline('neox init'))}\`!`)
         process.exit(1)
     }
 
     // Check if shared has no entries.
     if (!config.shared || !config.shared.length) {
-        console.error('**Invalid** config file, make sure you defined "shared" with at least one entry!')
+        console.error(`${chalk.red('[ Failed ]')} Invalid config file, make sure you defined "shared" with at least one entry!`)
         process.exit(1)
     }
 
@@ -64,11 +65,11 @@ export const handler = async (argv: Arguments<Options>): Promise<void> => {
     } else {
         const shared = config.shared.find((shared: any) => shared.outDir === selected)
         if (!shared) {
+            spinner.text = `${chalk.red('[ Failed ]')} Failed to find \`${selected}\` directory!\n`
             spinner.fail()
-            console.error(`**Failed** to find \`${selected}\` directory!`)
             process.exit(1)
         }
-        spinner.text = `Processing ${shared.outDir || shared.repo}...\n`
+        spinner.text = `Processing ${shared.outDir}...\n`
         spinner.start()
         await processShared(shared, debug)
     }
@@ -80,8 +81,8 @@ async function processShared(shared: Config['shared'][0], debug?: boolean) {
     // Validate config
     // Check if config.repo is defined
     if (!shared.repo) {
+        spinner.text = `${chalk.red('[ Failed ]')} Invalid config file, make sure you defined "repo" with a valid repository!\n`
         spinner.fail()
-        console.error('**Invalid** config file, make sure you defined "repo" with a valid repository!')
         process.exit(1)
     }
 
@@ -96,13 +97,14 @@ async function processShared(shared: Config['shared'][0], debug?: boolean) {
     try {
         if (!existsSync(outDir)) mkdirSync(outDir)
     } catch (error) {
+        spinner.text = `${chalk.red('[ Failed ]')} Failed to access \`${outDir}\` directory!\n`
         spinner.fail()
-        console.error(`**Failed** to access \`${outDir}\` directory!`)
         process.exit(1)
     }
 
     // Download shared repo
     const state = await downloadShared(shared, initGit(outDir), isSubmodule, debug)
+    spinner.color = 'magenta'
     if (state === 'clone') {
         spinner.text = 'Successfully **retrieved** data from remote source!\n'
     }
@@ -112,8 +114,12 @@ async function processShared(shared: Config['shared'][0], debug?: boolean) {
 
     // Post process shared repo
     await processSharedExclude(shared, outDir)
-    if (!isSubmodule) await removeGitDir(outDir)
+    if (!isSubmodule) {
+        spinner.text = 'Removing .git directory... submodule is disabled.\n'
+        await removeGitDir(outDir)
+    }
 
+    spinner.color = 'green'
     spinner.text = `📦 Successfully processed ${shared.outDir}!\n `
     spinner.succeed()
 }
@@ -132,7 +138,7 @@ async function removeOutDir(outDir: string) {
         spinner.text = `🧹 Removing \`${outDir}\` directory...\n`
         await rimraf(outDir)
     } catch (error) {
-        spinner.text = `**Failed** to access \`${outDir}\` directory!\n`
+        spinner.text = `${chalk.red('[ Failed ]')} Failed to access \`${outDir}\` directory!\n`
         spinner.fail()
         process.exit(1)
     }
@@ -141,7 +147,8 @@ async function removeOutDir(outDir: string) {
 async function downloadShared(shared: Config['shared'][0], git: SimpleGit, isSubmodule: boolean, debug?: boolean): Promise<'clone' | 'pull'> {
     // Download shared repo
     try {
-        spinner.text = 'Downloading data from remote source...\n'
+        spinner.color = 'yellow'
+        spinner.text = `${chalk.yellow(' Downloading')} ${chalk.underline(shared.outDir)} from remote source...\n`
         await git.clone(shared.repo, '.')
         return 'clone'
     } catch (cloneError: any) {
@@ -156,7 +163,7 @@ async function downloadShared(shared: Config['shared'][0], git: SimpleGit, isSub
         }
     }
 
-    spinner.text = `**Failed** to retrieve data from remote source!`
+    spinner.text = `${chalk.red('[ Failed ]')} Failed to retrieve data from remote source!\n`
     spinner.fail()
     process.exit(1)
 }
@@ -165,7 +172,7 @@ async function processSharedExclude(shared: Config['shared'][0], outDir: string)
     // Validate config
     // Check if config.exclude is defined.
     if (!shared.exclude) {
-        spinner.text = `**Invalid** config file, make sure you defined "exclude" with an array of files to exclude!\n`
+        spinner.text = `${chalk.red('[ Failed ]')} Invalid config file, make sure you defined "exclude" with an array of files to exclude!\n`
         spinner.fail()
         process.exit(1)
     }
@@ -179,8 +186,8 @@ async function processSharedExclude(shared: Config['shared'][0], outDir: string)
                 unlinkSync(`${outDir}/${exclude}`)
             }
         } catch (error) {
+            spinner.text = `${chalk.red('[ Failed ]')} Failed to access \`${outDir}\` directory!\n`
             spinner.fail()
-            console.error(`**Failed** to access \`${outDir}\` directory!`)
             process.exit(1)
         }
     }
@@ -194,7 +201,7 @@ async function removeGitDir(outDir: string) {
             await rimraf(`${outDir}/.git`)
         }
     } catch (error) {
-        spinner.text = `**Failed** to access \`.git\` directory!\n`
+        spinner.text = `${chalk.red('[ Failed ]')} Failed to access \`.git\` directory!\n`
         spinner.fail()
         process.exit(1)
     }
