@@ -12,27 +12,27 @@ neoX is a powerful CLI tool and library that aims to solve the problem of duplic
 ### Local Installation
 
 ```bash
-npm install neoX
+npm install neox-cli
 ```
 
 or 
 
 ```bash
-yarn add neoX
+yarn add neox-cli
 ```
 
 ### Global Installation
 
-Install neoX globally for system-wide accessibility.
+Install neox-cli globally for system-wide accessibility.
 
 ```bash
-npm install -g neoX
+npm install -g neox-cli
 ```
 
 or 
 
 ```bash
-yarn global add neoX
+yarn global add neox-cli
 ```
 
 ## ⚡ Quick Start
@@ -42,19 +42,19 @@ After installing the package, use the CLI like so:
 For local installation:
 
 ```bash
-npx neoX init
+npx neox-cli init
 ```
 
 For global installation:
 
 ```bash
-neoX init
+neox-cli init
 ```
 
 Or using the alias:
 
 ```bash
-ct init
+neox init
 ```
 
 ## 📘 Usage
@@ -63,7 +63,7 @@ ct init
 
 #### Initialization
 
-Run `neoX init` or its alias `ct init` to set up your centralized type repository.
+Run `neox-cli init` or its alias `neox init` to set up your centralized type repository.
 
 ```bash
 neoX init
@@ -76,13 +76,13 @@ This creates a `neoX.config.json` in your current directory with recommended set
 To update your local type definitions from your centralized repository, run:
 
 ```bash
-neoX pull
+neox-cli pull
 ```
 
 or its alias
 
 ```bash
-ct pull
+neox pull
 ```
 
 ### Advanced Usage: Custom `tsconfig.json`
@@ -114,7 +114,7 @@ Updates your local type definitions from your centralized type repository.
 
 ## 📣 Contributing
 
-1. Fork the repo (https://github.com/EternalC0der/neoX-cli/fork)
+1. Fork the repo (https://github.com/EternalC0der/neox-cli/fork)
 2. Create your feature branch (`git checkout -b feature/fooBar`)
 3. Commit your changes (`git commit -am 'Add some fooBar'`)
 4. Push to the branch (`git push origin feature/fooBar`)
