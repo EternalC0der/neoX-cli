@@ -108,3 +108,4 @@ neoX.config.json
 /.neoX
 
 .yarn/
+.diff.txt

@@ -9,7 +9,9 @@
     ],
     "scripts": {
         "build": "npx tsc",
+        "build:w": "npx tsc -w",
         "prepare": "yarn build",
+        "dev": "ts-node src/cli.ts",
         "lint": "eslint --ext .js,.ts . --ignore-path ../.gitignore",
         "format": "prettier --ignore-path ../.gitignore --write \"**/*.+(js|ts|json)\""
     },
@@ -29,6 +31,9 @@
         "typescript": "^5.2.2"
     },
     "dependencies": {
+        "chalk": "4.1.2",
+        "enquirer": "^2.4.1",
+        "ora": "5.4.0",
         "rimraf": "^5.0.5",
         "simple-git": "^3.19.1",
         "yargs": "^17.7.2"
