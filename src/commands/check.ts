@@ -61,9 +61,7 @@ export const handler = async (argv: Arguments<Options>): Promise<void> => {
         if (!shared.isSubmodule) {
             messages.push({
                 isUpToDate: false,
-                text: `${chalk.red(' Failed ')} [ ${chalk.underline(shared.outDir || shared.repo)} ] Failed to process ${
-                    shared.repo
-                }, make sure you defined "outDir" in your config file!`
+                text: `${chalk.red(' Failed ')} [ ${chalk.underline(shared.outDir || shared.repo)} ] Failed to process ${shared.repo}, only submodule is supported!`
             })
             continue
         }
