@@ -12,6 +12,10 @@ type Options = {
     all: boolean | undefined
     target: string | undefined
 }
+interface CheckMessage {
+    text: string
+    isUpToDate: boolean
+}
 
 export const command: string = 'check'
 export const desc: string = 'check exising new commit in remote source'
@@ -51,27 +55,25 @@ export const handler = async (argv: Arguments<Options>): Promise<void> => {
     } else {
         repos = config.shared
     }
-    const messages = []
+    const messages: CheckMessage[] = []
 
     for (const shared of repos) {
         if (!shared.isSubmodule) {
-            messages.push(
-                [
-                    `${chalk.red(' Failed ')}`,
-                    `[ ${chalk.underline(shared.outDir || shared.repo)} ] `,
-                    `Failed to process ${shared.repo}, make sure you defined "isSubmodule" in your config file!`
-                ].join('')
-            )
+            messages.push({
+                isUpToDate: false,
+                text: `${chalk.red(' Failed ')} [ ${chalk.underline(shared.outDir || shared.repo)} ] Failed to process ${
+                    shared.repo
+                }, make sure you defined "outDir" in your config file!`
+            })
             continue
         }
         spinner.text = `${chalk.blue('[ Checking ]')} Processing ${shared.outDir || shared.repo}...\n`
         spinner.start()
         if (!shared.outDir) {
-            messages.push(
-                [`${chalk.red(' Failed ')}`, `[ ${chalk.underline(shared.repo)} ] `, `Failed to process ${shared.repo}, make sure you defined "outDir" in your config file!`].join(
-                    ''
-                )
-            )
+            messages.push({
+                isUpToDate: false,
+                text: `${chalk.red(' Failed ')} [ ${chalk.underline(shared.outDir)} ] Failed to process ${shared.repo}, make sure you defined "outDir" in your config file!`
+            })
             continue
         }
 
@@ -83,21 +85,39 @@ export const handler = async (argv: Arguments<Options>): Promise<void> => {
         const lastCommitHash = remoteBranches.filter((branch) => branch.includes('refs/heads')).map((branch) => branch.split('\t')[0].split(' ')[0])[0]
 
         if (lastCommitFromLocal.latest?.hash !== lastCommitHash) {
-            messages.push(
-                [
+            messages.push({
+                isUpToDate: false,
+                text: [
                     `${chalk.yellow(' Warning ')}`,
                     `[ ${chalk.underline(shared.outDir)} ] `,
                     `You have new commit in remote source, please pull the lastest commit with \`${chalk.green(chalk.underline('neox pull'))}\`!`
                 ].join('')
-            )
-        } else messages.push([`${chalk.green(' Up-to-date ')}`, `[ ${chalk.underline(shared.outDir)} ]  You are up-to-date with ${chalk.underline(shared.outDir)}!`].join(''))
+            })
+        } else {
+            messages.push({
+                isUpToDate: true,
+                text: [`${chalk.green(' Up-to-date ')}`, `[ ${chalk.underline(shared.outDir)} ]  You are up-to-date with ${chalk.underline(shared.outDir)}!`].join('')
+            })
+        }
     }
 
-    if (messages.length > 0) {
+    // if (messages.length > 0) {
+    //     spinner.stop()
+    //     console.log(messages.join('\n'))
+    //     process.exit(1)
+    // } else process.exit(0)
+    const WaringLength = messages.filter((message) => !message.isUpToDate).length
+    if (WaringLength > 0) {
         spinner.stop()
-        console.log(messages.join('\n'))
+        const sortedMessages = messages.sort((a, b) => (a.isUpToDate === b.isUpToDate ? 0 : a.isUpToDate ? 1 : -1))
+        const text: string = sortedMessages.map((message) => message.text).join('\n')
+        console.log(text)
         process.exit(1)
-    } else process.exit(0)
+    } else {
+        spinner.stop()
+        console.log(messages.map((message) => message.text).join('\n'))
+        process.exit(0)
+    }
 }
 
 function iniGit(outDir: string): SimpleGit {
