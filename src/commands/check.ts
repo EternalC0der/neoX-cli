@@ -58,24 +58,24 @@ export const handler = async (argv: Arguments<Options>): Promise<void> => {
     const messages: CheckMessage[] = []
 
     for (const shared of repos) {
-        if (!shared.isSubmodule) {
-            messages.push({
-                isUpToDate: false,
-                text: `${chalk.red(' Failed ')} [ ${chalk.underline(shared.outDir || shared.repo)} ] Failed to process ${
-                    shared.repo
-                }, make sure you defined "outDir" in your config file!`
-            })
-            continue
-        }
-        spinner.text = `${chalk.blue('[ Checking ]')} Processing ${shared.outDir || shared.repo}...\n`
-        spinner.start()
         if (!shared.outDir) {
             messages.push({
                 isUpToDate: false,
-                text: `${chalk.red(' Failed ')} [ ${chalk.underline(shared.outDir)} ] Failed to process ${shared.repo}, make sure you defined "outDir" in your config file!`
+                text: `${chalk.red(' Failed ')} [ ${chalk.underline(shared.repo)} ] Failed to process ${shared.repo}, "outDir" is required!`
             })
             continue
         }
+
+        if (!shared.isSubmodule) {
+            messages.push({
+                isUpToDate: false,
+                text: `${chalk.red(' Failed ')} [ ${chalk.underline(shared.outDir)} ] Failed to process ${shared.repo}, only submodule is supported!`
+            })
+            continue
+        }
+
+        spinner.text = `${chalk.blue('[ Checking ]')} Processing ${shared.outDir}...\n`
+        spinner.start()
 
         const git = iniGit(shared.outDir as string)
         const lastCommitFromLocal = await git.log(['-1'])
