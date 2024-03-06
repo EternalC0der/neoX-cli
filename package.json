@@ -1,7 +1,7 @@
 {
     "name": "neox-cli",
     "description": "Cross typescript interfaces, types and more!",
-    "version": "2.1.0",
+    "version": "2.2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "files": [

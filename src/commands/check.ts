@@ -1,7 +1,7 @@
 import type { Arguments, CommandBuilder } from 'yargs'
 import { simpleGit, SimpleGit } from 'simple-git'
 import { defaultGitOptions } from '../core'
-import { readFileSync } from 'fs'
+import { readFileSync, existsSync } from 'fs'
 import { Config } from '../types'
 import ora from 'ora'
 import chalk from 'chalk'
@@ -76,6 +76,15 @@ export const handler = async (argv: Arguments<Options>): Promise<void> => {
 
         spinner.text = `${chalk.blue('[ Checking ]')} Processing ${shared.outDir}...\n`
         spinner.start()
+
+        // Check if the directory exists
+        if (!existsSync(shared.outDir as string)) {
+            messages.push({
+                isUpToDate: false,
+                text: `${chalk.red(' Failed ')} [ ${chalk.underline(shared.outDir)} ] Failed to process ${shared.repo}, directory not found!`
+            })
+            continue
+        }
 
         const git = iniGit(shared.outDir as string)
         const lastCommitFromLocal = await git.log(['-1'])
